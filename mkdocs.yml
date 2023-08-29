@@ -1,6 +1,6 @@
 site_name: Kasper's AZ-400 notes
 site_author: Kasper Kornak
 repo_name: KasperKornak/AZ-400-learning
-docs_dir: MicrosoftLearingPath
+docs_dir: ../MicrosoftLearingPath
 theme:
   name: material
