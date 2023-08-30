@@ -4,5 +4,6 @@ repo_name: KasperKornak/AZ-400-learning
 docs_dir: MicrosoftLearningPath
 theme:
   name: material
-nav:
-  - Home: index.md
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
