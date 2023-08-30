@@ -4,9 +4,20 @@ repo_name: KasperKornak/AZ-400-learning
 docs_dir: MicrosoftLearningPath
 theme:
   name: material
+  language: en
   features:
+    - navigation.tracking
+    - navigation.instant
     - navigation.tabs
     - navigation.tabs.sticky
-nav:
-  - Home: index.md
-  - DevOps transforamtion journey: DevOps-transformation-journey/
+
+  palette:
+  - scheme: default
+    toggle:
+      icon: material/brightness-4
+      name: switch to light mode
+  - scheme: slate
+    toggle:
+      icon: material/brightness-7
+      name: switch to dark mode
+    
