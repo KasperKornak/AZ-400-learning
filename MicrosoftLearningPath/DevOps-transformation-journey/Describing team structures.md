@@ -15,12 +15,14 @@ Follows a **sequential order**, but lacks the mmechanisms to overcome the proble
 - Rapid and flexible responses.
 
 Agile manifesto states that:
+
 1. Development need to favor individuals and interactions over processes and tools.
 2. Working software over comprehensive documentation.
 3. Customer collaboration over contract negotiation.
 4. Respond to changes over following a plan.
 
 Agile software development methods are based on releases and iterations:
+
 - One release may consist of several iterations,
 - Each iteration is like a small, independent project,
 - After being estimated and prioritization:

@@ -31,6 +31,7 @@ For instance, a banking system.
 
 ## KPIs
 Most commonly used KPIs:
+
 - Efficiency (Server to Admin Ratio, Application usage & performance),
 - Faster outcomes (Deployment frequency, speed, size, **Lead Time**),
 - Quality and security (Deployment failure rates, bug report rates, mean time to detection, availabilty),
