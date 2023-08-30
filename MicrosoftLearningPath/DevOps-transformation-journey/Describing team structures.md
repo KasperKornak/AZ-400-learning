@@ -2,6 +2,7 @@
 ## Development strategies
 ### Waterfall
 The process usually looks like this:
+
 - Determining a problem,
 - Analyzing the requirements,
 - Building and testing the required code,

@@ -2,7 +2,7 @@
 Notes for taking AZ-400 exam.
 
 ## Microsoft learning path
-- [ ] DevOps transformation journey
+- [x] DevOps transformation journey
 - [ ] Development for enterprise DevOps
 - [ ] Implement CI with Azure Pipelines and GitHub Actions
 - [ ] Design and implement a release strategy

@@ -11,7 +11,7 @@
 ## Exploring DevOps
 The goal is to shorten the cycle time, to deploy the new code as fast as possible.
 
-### Some DevOps concepts:
+### Some DevOps concepts
 1. **Continuous Integration** drives the ongoing merging and testing of code, leading to an earl finding of defects. Other benefits include less time wasted fighting merge issues and rapid feedback for developers.
 2. **Continuous Delivery** to production and testing environments enables organizations quickly fix bugs.
 3. **Verison Control** enables team to efficiently work on projects.
