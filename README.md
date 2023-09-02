@@ -1,9 +1,9 @@
 # AZ-400-learning
-Notes for taking AZ-400 exam.
+Notes for taking AZ-400 exam. Website: https://kasperkornak.github.io/AZ-400-learning/
 
 ## Microsoft learning path
 - [x] DevOps transformation journey
-- [ ] Development for enterprise DevOps
+- [x] Development for enterprise DevOps
 - [ ] Implement CI with Azure Pipelines and GitHub Actions
 - [ ] Design and implement a release strategy
 - [ ] Implement a secure continuous deployment using Azure Pipelines
