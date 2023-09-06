@@ -8,7 +8,7 @@ Notes for taking AZ-400 exam. Website: https://kasperkornak.github.io/AZ-400-lea
 - [x] [Design and implement a release strategy](<MicrosoftLearningPath/Design-and-implement-a-release-strategy/Automating inspection of health.md>)
 - [x] [Implement a secure continuous deployment using Azure Pipelines](<MicrosoftLearningPath/Implement-a-secure-continuous-deployment-using-Azure-Pipelines/Introdcution to deployment patterns.md>)
 - [x] [Manage infrastructure as code using Azure and DSC](<MicrosoftLearningPath/Manage-infrastructure-as-code-using-Azure-and-DSC/Azure Automation with DevOps.md>)
-- [ ] Design and implement a dependency management strategy
+- [x] [Design and implement a dependency management strategy](<MicrosoftLearningPath/Design-and-implement-a-dependency-management-strategy/Package dependencies.md>)
 - [x] [Implement continuous feedback](<MicrosoftLearningPath/Implement-continuous-feedback/Implementing tools to track usage and flow.md>)
-- [ ] Implement security and validate code bases for compliance
+- [x] [Implement security and validate code bases for compliance](<MicrosoftLearningPath/Implement-security-and-validate-code-bases-for-compliance/Introduction to Secure DevOps.md>)
 
