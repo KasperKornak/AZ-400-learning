@@ -1,0 +1,2353 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+        <meta name="author" content="Kasper Kornak">
+      
+      
+      
+        <link rel="prev" href="../Continuous%20Integration/">
+      
+      
+        <link rel="next" href="../Exploring%20Azure%20Pipelines/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.5.2, mkdocs-material-9.2.8">
+    
+    
+      
+        <title>Designing a container build strategy - Kasper's AZ-400 notes</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.046329b4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.85d0ee34.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#designing-a-container-build-strategy" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Kasper&#39;s AZ-400 notes" class="md-header__button md-logo" aria-label="Kasper's AZ-400 notes" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Kasper's AZ-400 notes
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Designing a container build strategy
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="switch to light mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="switch to dark mode"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+    
+  
+  Welcome to AZ-400 learning
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../Design-and-implement-a-dependency-management-strategy/GitHub%20packages/" class="md-tabs__link">
+          
+  
+  Design and implement a dependency management strategy
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../Design-and-implement-a-release-strategy/Automating%20inspection%20of%20health/" class="md-tabs__link">
+          
+  
+  Design and implement a release strategy
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../DevOps-transformation-journey/Agile%20planning%20with%20GitHub%20Projects%20and%20Azure%20Boards/" class="md-tabs__link">
+          
+  
+  DevOps transformation journey
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../Development-for-enterprise-DevOps/Collaborate%20with%20PRs%20in%20Azure%20Repos/" class="md-tabs__link">
+          
+  
+  Development for enterprise DevOps
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../Continuous%20Integration%20with%20GitHub%20Actions/" class="md-tabs__link">
+          
+  
+  Implement CI with Azure Pipelines and GitHub Actions
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../Implement-a-secure-continuous-deployment-using-Azure-Pipelines/AB%20testing%20and%20progressive%20exposure%20deployment/" class="md-tabs__link">
+          
+  
+  Implement a secure continuous deployment using Azure Pipelines
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../Implement-continuous-feedback/Developing%20monitor%20and%20status%20dashboards/" class="md-tabs__link">
+          
+  
+  Implement continuous feedback
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../Implement-security-and-validate-code-bases-for-compliance/Introduction%20to%20Secure%20DevOps/" class="md-tabs__link">
+          
+  
+  Implement security and validate code bases for compliance
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../Manage-infrastructure-as-code-using-Azure-and-DSC/Azure%20Automation%20with%20DevOps/" class="md-tabs__link">
+          
+  
+  Manage infrastructure as code using Azure and DSC
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Kasper&#39;s AZ-400 notes" class="md-nav__button md-logo" aria-label="Kasper's AZ-400 notes" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    Kasper's AZ-400 notes
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Welcome to AZ-400 learning
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Design and implement a dependency management strategy
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Design and implement a dependency management strategy
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Design-and-implement-a-dependency-management-strategy/GitHub%20packages/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    GitHub packages
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Design-and-implement-a-dependency-management-strategy/Implementing%20a%20versioning%20strategy/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Implementing a versioning strategy
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Design-and-implement-a-dependency-management-strategy/Migrate%20consolidating%20and%20secure%20artifacts/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Migrate consolidating and secure artifacts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Design-and-implement-a-dependency-management-strategy/Package%20dependencies/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Package dependencies
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Design-and-implement-a-dependency-management-strategy/Understanding%20package%20management/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Understanding package management
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Design and implement a release strategy
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Design and implement a release strategy
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Design-and-implement-a-release-strategy/Automating%20inspection%20of%20health/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Automating inspection of health
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Design-and-implement-a-release-strategy/Creating%20a%20release%20pipeline/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Creating a release pipeline
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Design-and-implement-a-release-strategy/Introduction%20Continuous%20Delivery/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction Continuous Delivery
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Design-and-implement-a-release-strategy/Managing%20and%20modularizing%20tasks%20and%20templates/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Managing and modularizing tasks and templates
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Design-and-implement-a-release-strategy/Provisioning%20and%20testing%20environments/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Provisioning and testing environments
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Design-and-implement-a-release-strategy/Release%20recommendations/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Release recommendations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    DevOps transformation journey
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            DevOps transformation journey
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../DevOps-transformation-journey/Agile%20planning%20with%20GitHub%20Projects%20and%20Azure%20Boards/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Agile planning with GitHub Projects and Azure Boards
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../DevOps-transformation-journey/Choosing%20the%20DevOps%20tools/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Choosing the DevOps tools
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../DevOps-transformation-journey/Choosing%20the%20right%20project/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Choosing the right project
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../DevOps-transformation-journey/Describing%20team%20structures/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Describing team structures
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../DevOps-transformation-journey/Describing%20types%20of%20source%20control%20systems/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Describing types of source control systems
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../DevOps-transformation-journey/Introduction%20to%20DevOps/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction to DevOps
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../DevOps-transformation-journey/Introduction%20to%20source%20control/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction to source control
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../DevOps-transformation-journey/Work%20with%20Azure%20Repos%20and%20GitHub/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Work with Azure Repos and GitHub
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Development for enterprise DevOps
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Development for enterprise DevOps
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Development-for-enterprise-DevOps/Collaborate%20with%20PRs%20in%20Azure%20Repos/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Collaborate with PRs in Azure Repos
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Development-for-enterprise-DevOps/Exploring%20Git%20hooks/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Exploring Git hooks
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Development-for-enterprise-DevOps/Identifying%20technical%20debt/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Identifying technical debt
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Development-for-enterprise-DevOps/Managing%20Git%20branches%20and%20workflows/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Managing Git branches and workflows
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Development-for-enterprise-DevOps/Managing%20Git%20repositories/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Managing Git repositories
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Development-for-enterprise-DevOps/Planning%20foster%20inner%20source/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Planning foster inner source
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Development-for-enterprise-DevOps/Structuring%20Git%20Repo/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Structuring Git Repo
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Implement CI with Azure Pipelines and GitHub Actions
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Implement CI with Azure Pipelines and GitHub Actions
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Continuous%20Integration%20with%20GitHub%20Actions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Continuous Integration with GitHub Actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Continuous%20Integration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Continuous Integration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Designing a container build strategy
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Designing a container build strategy
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#whats-the-difference-between-containers-and-virtualization" class="md-nav__link">
+    What's the difference between containers and virtualization?
+  </a>
+  
+    <nav class="md-nav" aria-label="What's the difference between containers and virtualization?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#virtual-machines" class="md-nav__link">
+    Virtual machines
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#containers" class="md-nav__link">
+    Containers
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#useful-docker-commands" class="md-nav__link">
+    Useful Docker commands
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dockerfile-core-concepts" class="md-nav__link">
+    Dockerfile core concepts
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multistage-dockerfiles" class="md-nav__link">
+    Multistage Dockerfiles
+  </a>
+  
+    <nav class="md-nav" aria-label="Multistage Dockerfiles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#breakdown-of-the-example" class="md-nav__link">
+    Breakdown of the example
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multistage-build-considerations" class="md-nav__link">
+    Multistage build considerations
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#azure-continer-oriented-services" class="md-nav__link">
+    Azure continer-oriented services
+  </a>
+  
+    <nav class="md-nav" aria-label="Azure continer-oriented services">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#azure-container-instances-aci" class="md-nav__link">
+    Azure Container Instances (ACI)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#azure-kubernetes-service-aks" class="md-nav__link">
+    Azure Kubernetes Service (AKS)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#azure-container-registry-acr" class="md-nav__link">
+    Azure Container Registry (ACR)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#azure-container-apps" class="md-nav__link">
+    Azure Container Apps
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#azure-app-service" class="md-nav__link">
+    Azure App Service
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lab-address" class="md-nav__link">
+    Lab address
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Exploring%20Azure%20Pipelines/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Exploring Azure Pipelines
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../GitHub%20Actions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    GitHub Actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Integrating%20with%20Azure%20Pipelines/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Integrating with Azure Pipelines
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Managing%20Azure%20Pipeline%20agents%20and%20pools/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Managing Azure Pipeline agents and pools
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Pipeline%20strategy/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pipeline strategy
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Implement a secure continuous deployment using Azure Pipelines
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Implement a secure continuous deployment using Azure Pipelines
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Implement-a-secure-continuous-deployment-using-Azure-Pipelines/AB%20testing%20and%20progressive%20exposure%20deployment/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    A/B testing and progressive exposure deployment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Implement-a-secure-continuous-deployment-using-Azure-Pipelines/Blue-green%20deployment%20and%20feature%20toggles/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Blue-green deployment and feature toggles
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Implement-a-secure-continuous-deployment-using-Azure-Pipelines/Canary%20release%20and%20dark%20launching/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Canary release and dark launching
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Implement-a-secure-continuous-deployment-using-Azure-Pipelines/Integrating%20identity%20management%20systems/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Integrating identity management systems
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Implement-a-secure-continuous-deployment-using-Azure-Pipelines/Introdcution%20to%20deployment%20patterns/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introdcution to deployment patterns
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Implement-a-secure-continuous-deployment-using-Azure-Pipelines/Managing%20application%20configuration%20data/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Managing application configuration data
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Implement continuous feedback
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Implement continuous feedback
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Implement-continuous-feedback/Developing%20monitor%20and%20status%20dashboards/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Developing monitor and status dashboards
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Implement-continuous-feedback/Implementing%20tools%20to%20track%20usage%20and%20flow/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Implementing tools to track usage and flow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Implement-continuous-feedback/Managing%20alerts%2C%20blameless%20retrospectives%20and%20a%20just%20culture/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Managing alerts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Implement security and validate code bases for compliance
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Implement security and validate code bases for compliance
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Implement-security-and-validate-code-bases-for-compliance/Introduction%20to%20Secure%20DevOps/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction to Secure DevOps
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Implement-security-and-validate-code-bases-for-compliance/OWASP%20and%20dynamic%20analyzers/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OWASP and dynamic analyzers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Implement-security-and-validate-code-bases-for-compliance/Security%20monitoring%20and%20governance/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Security monitoring and governance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Implement-security-and-validate-code-bases-for-compliance/Software%20Composition%20Analysis/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Software Composition Analysis
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Implement-security-and-validate-code-bases-for-compliance/Static%20analyzers/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Static analyzers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Manage infrastructure as code using Azure and DSC
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            Manage infrastructure as code using Azure and DSC
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Manage-infrastructure-as-code-using-Azure-and-DSC/Azure%20Automation%20with%20DevOps/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Azure Automation with DevOps
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Manage-infrastructure-as-code-using-Azure-and-DSC/Create%20Azure%20resources%20by%20using%20Azure%20CLI/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Azure resources by using Azure CLI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Manage-infrastructure-as-code-using-Azure-and-DSC/Creating%20Azure%20resources%20using%20Azure%20Resource%20Manager%20templates/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Creating Azure resources using Azure Resource Manager templates
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Manage-infrastructure-as-code-using-Azure-and-DSC/IaaC%20and%20configuration%20management/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    IaaC and configuration management
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Manage-infrastructure-as-code-using-Azure-and-DSC/Implementing%20Bicep/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Implementing Bicep
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Manage-infrastructure-as-code-using-Azure-and-DSC/Implementing%20Desired%20State%20Configuration%20%28DSC%29/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Implementing Desired State Configuration (DSC)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#whats-the-difference-between-containers-and-virtualization" class="md-nav__link">
+    What's the difference between containers and virtualization?
+  </a>
+  
+    <nav class="md-nav" aria-label="What's the difference between containers and virtualization?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#virtual-machines" class="md-nav__link">
+    Virtual machines
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#containers" class="md-nav__link">
+    Containers
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#useful-docker-commands" class="md-nav__link">
+    Useful Docker commands
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dockerfile-core-concepts" class="md-nav__link">
+    Dockerfile core concepts
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multistage-dockerfiles" class="md-nav__link">
+    Multistage Dockerfiles
+  </a>
+  
+    <nav class="md-nav" aria-label="Multistage Dockerfiles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#breakdown-of-the-example" class="md-nav__link">
+    Breakdown of the example
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multistage-build-considerations" class="md-nav__link">
+    Multistage build considerations
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#azure-continer-oriented-services" class="md-nav__link">
+    Azure continer-oriented services
+  </a>
+  
+    <nav class="md-nav" aria-label="Azure continer-oriented services">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#azure-container-instances-aci" class="md-nav__link">
+    Azure Container Instances (ACI)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#azure-kubernetes-service-aks" class="md-nav__link">
+    Azure Kubernetes Service (AKS)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#azure-container-registry-acr" class="md-nav__link">
+    Azure Container Registry (ACR)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#azure-container-apps" class="md-nav__link">
+    Azure Container Apps
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#azure-app-service" class="md-nav__link">
+    Azure App Service
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lab-address" class="md-nav__link">
+    Lab address
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="designing-a-container-build-strategy">Designing a container build strategy</h1>
+<h2 id="whats-the-difference-between-containers-and-virtualization">What's the difference between containers and virtualization?</h2>
+<p>Containers and VMs are similar in their goals: to isolate an application and its dependencies into a self-contained unit that can run anywhere. They remove the need for physical hardware, allowing for:</p>
+<ul>
+<li>More efficient use of computing resources and enerfy consumption.</li>
+<li>Cost-effectiveness.</li>
+</ul>
+<p>The main difference between containers and VMs is in their architectural approach.</p>
+<h3 id="virtual-machines">Virtual machines</h3>
+<p>A VM is essentially an emulation of a real computer that executes programs like a real computer. VMs run on top of a physical machine using a <strong>hypervisor</strong>. VMs package up the virtual hardware, a kernel (OS), and user space for each new VM.</p>
+<p><img alt="Alt text" src="../img/virtual-machine-hypervisor-architecture-1a5d17c1.png" /></p>
+<h3 id="containers">Containers</h3>
+<p>Unlike a VM, which provides hardware virtualization, a container provides operating-system-level virtualization by abstracting the <strong>user space</strong>.</p>
+<p>This diagram shows that containers package up just the user space, not the kernel or virtual hardware like a VM does. Each container gets its isolated user space to allow multiple containers to run on a single host machine. We can see that all the operating system-level architecture is being shared across containers. The only parts that are created from scratch are the bins and libs. It's what makes containers so lightweight.</p>
+<p><img alt="Alt text" src="../img/container-architecture-d3507692.png" /></p>
+<h2 id="useful-docker-commands">Useful Docker commands</h2>
+<ul>
+<li><code>docker build</code> - You create an image by executing a Dockerfile.</li>
+<li><code>docker pull</code> - You retrieve the image, likely from a container registry.</li>
+<li><code>docker run</code> - You execute the container. An instance is created of the image.</li>
+</ul>
+<h2 id="dockerfile-core-concepts">Dockerfile core concepts</h2>
+<p>Dockerfiles are text files that contain the commands needed by docker build to assemble an image.</p>
+<pre><code class="language-Dockerfile">FROM ubuntu
+LABEL maintainer=&quot;johndoe@contoso.com&quot;
+ADD appsetup /
+RUN /bin/bash -c 'source $HOME/.bashrc; echo $HOME'
+CMD [&quot;echo&quot;, &quot;Hello World from within the container&quot;]
+</code></pre>
+<p>The first line refers to the parent image based on which this new image will be based.
+Generally, all images will be based on another existing image. In this case, the Ubuntu image would be retrieved from either a local cache or from DockerHub.
+An image that doesn't have a parent is called a <strong>base image</strong>. In that rare case, the <code>FROM</code> line can be omitted, or <code>FROM scratch</code> can be used instead.</p>
+<p>The second line indicates the email address of the person who maintains this file. Previously, there was a MAINTAINER command, but that has been deprecated and replaced by a label.</p>
+<p>The third line adds a file to the root folder of the image. It can also add an executable.</p>
+<p>The fourth and fifth lines are part of a RUN command. </p>
+<p>The <code>RUN</code> command is run when the <code>docker build</code> creates the image. It's used to configure items within the image.
+By comparison, the last line represents a command that will be executed when a new container is created from the image; <strong>it's run after container creation</strong>.</p>
+<h2 id="multistage-dockerfiles">Multistage Dockerfiles</h2>
+<p>Multi-stage builds give the benefits of the builder pattern without the hassle of maintaining three separate files.</p>
+<pre><code class="language-Dockerfile">FROM mcr.microsoft.com/dotnet/core/aspnetcore:3.1 AS base
+WORKDIR /app
+EXPOSE 80
+EXPOSE 443
+
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build
+WORKDIR /src
+COPY [&quot;WebApplication1.csproj&quot;, &quot;&quot;]
+RUN dotnet restore &quot;./WebApplication1.csproj&quot;
+COPY . .
+WORKDIR &quot;/src/.&quot;
+RUN dotnet build &quot;WebApplication1.csproj&quot; -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish &quot;WebApplication1.csproj&quot; -c Release -o /app/publish
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT [&quot;dotnet&quot;, &quot;WebApplication1.dll&quot;]
+</code></pre>
+<p>Description:</p>
+<p><code>FROM build AS publish</code></p>
+<p><code>build</code> isn't an image pulled from a registry. It's the image we defined in stage 2, where we named the result of our-build (SDK) image "builder". <code>docker build</code> will create a named image we can later reference.</p>
+<p>We can also copy the output from one image to another. It's the real power to compile our code with one base SDK image (<code>mcr.microsoft.com/dotnet/core/sdk:3.1</code>) while creating a production image based on an optimized runtime image (<code>mcr.microsoft.com/dotnet/core/aspnet:3.1</code>). </p>
+<p><code>COPY --from=publish /app/publish .</code></p>
+<p>It takes the <code>/app/publish</code> directory from the published image and copies it to the working directory of the production image.</p>
+<h3 id="breakdown-of-the-example">Breakdown of the example</h3>
+<p>The first stage provides the base of our optimized runtime image. Notice it derives from <code>mcr.microsoft.com/dotnet/core/aspnet:3.1</code>.
+We would specify extra production configurations, such as registry configurations, MSIexec of other components. You would hand off any of those environment configurations to your ops folks to prepare the VM.</p>
+<p>The second stage is our build environment.<code>mcr.microsoft.com/dotnet/core/sdk:3.1</code> This includes everything we need to compile our code. From here, we have compiled binaries we can publish or test—more on testing in a moment.</p>
+<p>The third stage derives from our build stage. It takes the compiled output and "publishes" them in .NET terms.
+Publish means taking all the output required to deploy your <code>app/publish/service/component</code> and placing it in a single directory. It would include your compiled binaries, graphics (images), JavaScript, and so on.</p>
+<p>The fourth stage takes the published output and places it in the optimized image we defined in the first stage.</p>
+<h2 id="multistage-build-considerations">Multistage build considerations</h2>
+<ul>
+<li><strong>Adopt container modularity</strong>: Try to avoid creating overly complex container images that couple together several applications. Instead, use multiple containers and try to keep each container to a single purpose.</li>
+<li><strong>Avoid unnecessary packages</strong>: To help minimize image sizes, it's also essential to avoid including packages that you suspect might be needed but aren't yet sure if they're required.</li>
+<li><strong>Choose an appropriate base</strong>: While optimizing the contents of your Dockerfiles is essential, it's also crucial to choose the appropriate parent (base) image. Start with an image that only contains packages that are required.</li>
+<li><strong>Avoid including application data</strong>: While application data can be stored in the container, it will make your images more prominent.</li>
+</ul>
+<h2 id="azure-continer-oriented-services">Azure continer-oriented services</h2>
+<h3 id="azure-container-instances-aci">Azure Container Instances (ACI)</h3>
+<p>Running workloads in ACI allows you to create your applications rather than provisioning and managing the infrastructure that will run the applications. ACIs are simple and fast to deploy, and when you're using them, you gain the security of hypervisor isolation for each container group. It ensures that your containers aren't sharing an operating system kernel with other containers.</p>
+<h3 id="azure-kubernetes-service-aks">Azure Kubernetes Service (AKS)</h3>
+<p>This service lets you quickly deploy and manage Kubernetes, to scale and run applications while maintaining overall solid security.</p>
+<h3 id="azure-container-registry-acr">Azure Container Registry (ACR)</h3>
+<p>This service lets you store and manage container images in a central registry. It provides you with a Docker private registry as a first-class Azure resource.
+All container deployments, including <strong>DC/OS</strong>, <strong>Docker Swarm</strong>, and <strong>Kubernetes</strong>, are supported. The registry is integrated with other Azure services such as the <em>App Service</em>, <em>Batch</em>, <em>Service Fabric</em>, and others.</p>
+<h3 id="azure-container-apps">Azure Container Apps</h3>
+<p>Azure Container Apps allows you to build and deploy modern apps and microservices using serverless containers. It deploys containerized apps without managing complex infrastructure.
+You can write code using your preferred programming language or framework and build microservices with full support for <strong>Distributed Application Runtime (Dapr)</strong>. Scale dynamically based on HTTP traffic or events powered by <strong>Kubernetes Event-Driven Autoscaling (KEDA)</strong>.</p>
+<h3 id="azure-app-service">Azure App Service</h3>
+<p>Azure Web Apps provides a managed service for both Windows and Linux-based web applications and provides the ability to deploy and run containerized applications for both platforms. It provides autoscaling and load balancing options and is easy to integrate with Azure DevOps.</p>
+<h2 id="lab-address">Lab address</h2>
+<p>https://aka.ms/az-400-deploy-docker-containers-to-azure-app-service-web-apps</p>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tracking", "navigation.instant", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.dfff1995.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.dff1b7c8.min.js"></script>
+      
+    
+  </body>
+</html>
